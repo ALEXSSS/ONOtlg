@@ -1,3 +1,4 @@
+import asyncio
 import time
 import traceback
 
@@ -6,8 +7,6 @@ from telethon.tl.functions.channels import JoinChannelRequest
 
 from PROPERTY import ONO_BOT_PROPS, PROPS
 from dao_layer import retrieve_all_channels, add_anchor, add_user_channel_row, retrieve_all_messages_with_channel
-import asyncio
-
 from index import InvertedIndex
 from logger import log
 
@@ -18,7 +17,6 @@ client.start()
 loop = asyncio.get_event_loop()
 last_time_query = 0
 index = None
-
 
 
 @bot.message_handler(commands=['start', 'help'])
@@ -53,9 +51,10 @@ def search(message):
 
 def rebuild_index():
     curr_time = time.time()
-    if curr_time - last_time_query > PROPS.sleep_time:
+    if curr_time - last_time_query > PROPS.sleep_time_approaches:
         index = InvertedIndex()
         index.create_index(retrieve_all_messages_with_channel())
+
 
 def subscribe_if_not_subscribed(channel_to_check, client):
     if channel_to_check not in available_channels(client):

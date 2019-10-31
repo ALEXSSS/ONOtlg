@@ -1,4 +1,2 @@
-
-
-def log(label, message = ""):
+def log(label, message=""):
     print(label, message)

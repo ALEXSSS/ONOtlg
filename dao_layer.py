@@ -5,18 +5,21 @@ import psycopg2
 from PROPERTY import DATA_BASE_PROPS
 from logger import log
 
+# TODO ADD multithreaded pooling
+# TODO Add multithreaded connection pool
 
 def with_postgres_cursor(f):
     def wrapper(*args, **kwargs):
         connection = None
         cursor = None
         try:
-            connection = psycopg2.connect(user=DATA_BASE_PROPS.user,
-                                          password=DATA_BASE_PROPS.password,
-                                          host=DATA_BASE_PROPS.host,
-                                          port=DATA_BASE_PROPS.port,
-                                          database=DATA_BASE_PROPS.database)
-
+            connection = psycopg2.connect(
+                user=DATA_BASE_PROPS.user,
+                password=DATA_BASE_PROPS.password,
+                host=DATA_BASE_PROPS.host,
+                port=DATA_BASE_PROPS.port,
+                database=DATA_BASE_PROPS.database
+            )
             cursor = connection.cursor()
             f.connection = connection
             f.cursor = cursor
@@ -38,6 +41,7 @@ def with_postgres_cursor(f):
 def retrieve_all_channels(cursor):
     cursor.execute("SELECT * from ono_anchors;")
     return list(cursor.fetchall())
+
 
 @with_postgres_cursor
 def retrieve_all_messages_with_channel(cursor):
@@ -68,5 +72,57 @@ def add_user_channel_row(cursor, channel, user_id):
 @with_postgres_cursor
 def insert_messages(cursor, channel, messages):
     for message in messages:
-        cursor.execute(f"INSERT INTO MESSAGE(MESSAGE_ID, CHANNEL_NAME, CONTENT) "
-                       f"VALUES ('{message.id}','{channel}','{message.text}');")
+        # message.chat.id
+        # message.chat.title
+        # message.date
+        # message.sender.username
+        # message.sender.id
+
+        if message.text.isspace():
+            continue
+
+        cursor.execute(
+            f"""
+                INSERT INTO MESSAGE(
+                    MESSAGE_ID,
+                    
+                    CHANNEL_ID,
+                    CHANNEL_NAME,
+                    CHANNEL_TITLE,
+                    
+                    SENDER_USERNAME,
+                    SENDER_ID,
+                    
+                    PUBLISH_DATE,
+                    CONTENT
+                ) VALUES (
+                    '{message.id}',
+                    
+                    '{message.chat.id}',
+                    '{channel}',
+                    '{message.chat.title if hasattr(message.chat, 'title') else ""}',
+                    
+                    '{message.sender.username}',
+                    '{message.sender.id}',
+                    
+                    '{message.date}',
+                    '{message.text}'
+                );
+            """
+        )
+
+# CREATE TABLE MESSAGE
+# (
+#     MESSAGE_ID   TEXT,
+#
+#     CHANNEL_ID TEXT,
+#     CHANNEL_NAME TEXT,
+#     CHANNEL_TITLE TEXT,
+#
+#     SENDER_NAME TEXT,
+#     SENDER_USERNAME TEXT,
+#
+#     PUBLISH_DATE TEXT,
+#     CONTENT      TEXT NOT NULL,
+#     PRIMARY KEY (MESSAGE_ID, CHANNEL_NAME)
+# );

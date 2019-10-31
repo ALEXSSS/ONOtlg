@@ -62,7 +62,6 @@ class InvertedIndex:
         result = sorted(result.items(), key=lambda x: x[1], reverse=True)[:limit]
         return result
 
-
 # index = InvertedIndex()
 # rows = [
 #     ["Григорий пошёл домой на селиваново!", "1", "канал1"],
