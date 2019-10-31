@@ -9,7 +9,7 @@ class PROPS:
     api_id = 123
     api_hash = 'hash'
     client = TelegramClient('session_name', api_id, api_hash)
-    sleep_time_approaches = 5  # * 60
+    sleep_time_approaches = 15  # * 60
     sleep_time_channel = 2.0
 
 
