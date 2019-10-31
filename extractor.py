@@ -10,7 +10,7 @@ def run():
     ono_client.start()
 
     while True:
-        for channel, last_message in retrieve_all_channels:
+        for channel, last_message in retrieve_all_channels():
             if last_message == 'NOT_SET':
                 message = list(ono_client.iter_messages(entity=channel, limit=1))[0]
                 initialise_anchor(channel, message.id)
