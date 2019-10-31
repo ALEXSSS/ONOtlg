@@ -1,12 +1,14 @@
+import time
 import traceback
 
 import telebot
 from telethon.tl.functions.channels import JoinChannelRequest
 
 from PROPERTY import ONO_BOT_PROPS, PROPS
-from dao_layer import retrieve_all_channels, add_anchor, add_user_channel_row
+from dao_layer import retrieve_all_channels, add_anchor, add_user_channel_row, retrieve_all_messages_with_channel
 import asyncio
 
+from index import InvertedIndex
 from logger import log
 
 bot = telebot.TeleBot(ONO_BOT_PROPS.token)
@@ -14,6 +16,9 @@ client = PROPS.client
 client.start()
 
 loop = asyncio.get_event_loop()
+last_time_query = 0
+index = None
+
 
 
 @bot.message_handler(commands=['start', 'help'])
@@ -38,6 +43,19 @@ def add_channel(message):
     add_user_channel_row(channel, message.from_user.id)
 
 
+@bot.message_handler(regexp='^#search\s(\w|\W)*')
+def search(message):
+    query = message.html_text[len('#search'):].strip()
+    rebuild_index()
+    result = index.search_phrase(query)
+    bot.reply_to(message, f"Нашли результат {result}!")
+
+
+def rebuild_index():
+    curr_time = time.time()
+    if curr_time - last_time_query > PROPS.sleep_time:
+        index = InvertedIndex()
+        index.create_index(retrieve_all_messages_with_channel())
 
 def subscribe_if_not_subscribed(channel_to_check, client):
     if channel_to_check not in available_channels(client):
