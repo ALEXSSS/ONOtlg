@@ -23,7 +23,7 @@ def aggregate_massages():
                     initialise_anchor(channel, max([message.id for message in messages]))
                     insert_messages(channel, messages)
                 for item in messages:
-                    log(f"Taken from the chat {channel},\n text: ", item.text)
+                    log(f"Taken from the chat {channel},\n text: {item.text}")
         time.sleep(PROPS.sleep_time_approaches)
 
 

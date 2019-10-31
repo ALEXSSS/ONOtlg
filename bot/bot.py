@@ -11,8 +11,6 @@ from index import InvertedIndex
 from logger import log
 
 bot = telebot.TeleBot(ONO_BOT_PROPS.token)
-client = PROPS.client
-client.start()
 
 loop = asyncio.get_event_loop()
 last_time_query = 0

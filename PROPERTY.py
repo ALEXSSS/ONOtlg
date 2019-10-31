@@ -1,6 +1,10 @@
 from telethon import TelegramClient
 
 
+PROD = False
+# PROD = True
+
+
 class PROPS:
     api_id = 123
     api_hash = 'hash'
