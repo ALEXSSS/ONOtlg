@@ -39,6 +39,11 @@ def retrieve_all_channels(cursor):
     cursor.execute("SELECT * from ono_anchors;")
     return list(cursor.fetchall())
 
+@with_postgres_cursor
+def retrieve_all_messages_with_channel(cursor):
+    cursor.execute("SELECT * from message;")
+    return list(cursor.fetchall())
+
 
 @with_postgres_cursor
 def retrieve_messages_from_anchor_with_channel(cursor):
