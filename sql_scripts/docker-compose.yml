@@ -1,0 +1,13 @@
+version: '3'
+services:
+    onoTlg:
+        restart: always
+        image: 'postgres:latest'
+        ports:
+            - "5433:5432"
+        environment:
+            - POSTGRES_USER=postgres
+            - POSTGRES_PASSWORD=pass
+        volumes:
+            - ./volume:/var/lib/postgresql/data
+            - ./init_scripts:/docker-entrypoint-initdb.d
