@@ -2,8 +2,7 @@ import time
 
 from PROPERTY import PROPS
 from dao_layer import retrieve_all_channels, initialise_anchor, insert_messages
-
-
+from logger import log
 
 
 def run():
@@ -23,7 +22,8 @@ def run():
                 if len(messages) > 0:
                     initialise_anchor(channel, max([message.id for message in messages]))
                     insert_messages(channel, messages)
-                for item in messages: print(item.text)
+                for item in messages: log("Taken from the chat", item.text)
         time.sleep(PROPS.sleep_time)
+
 
 run()
