@@ -5,6 +5,7 @@ import psycopg2
 from PROPERTY import DATA_BASE_PROPS
 from logger import log
 
+
 # TODO ADD multithreaded pooling
 # TODO Add multithreaded connection pool
 
@@ -45,7 +46,19 @@ def retrieve_all_channels(cursor):
 
 @with_postgres_cursor
 def retrieve_all_messages_with_channel(cursor):
-    cursor.execute("SELECT * from message;")
+    cursor.execute("SELECT content, channel_name, message_id from message;")
+    return list(cursor.fetchall())
+
+
+@with_postgres_cursor
+def retrieve_all_messages_with_ids(cursor, ids=[]):
+    cursor.execute(
+        f"""
+        SELECT content, channel_name, message_id 
+        from message 
+        where message_id in ({','.join(ids)});
+        """
+    )
     return list(cursor.fetchall())
 
 
@@ -78,7 +91,7 @@ def insert_messages(cursor, channel, messages):
         # message.sender.username
         # message.sender.id
 
-        if message.text.isspace():
+        if not message.text or message.text.isspace():
             continue
 
         cursor.execute(

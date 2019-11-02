@@ -27,7 +27,7 @@ class InvertedIndex:
             res = res.replace(punc, " ")
         return res
 
-    def process_sentence(self, sentence: str):
+    def process_text(self, sentence: str):
         processed_sentence = InvertedIndex.replace_punctuation(sentence)
         words = processed_sentence.split(" ")
         words = [self.stemmer.stem(word) for word in words if word not in russian_stop_words]
@@ -36,10 +36,10 @@ class InvertedIndex:
     # rows = [[sentence, message_id, channel]]
     def create_index(self, rows):
         for row in rows:
-            sentence = row[0]
+            text = row[0]
             message_id = row[1]
             channel = row[2]
-            words = self.process_sentence(sentence)
+            words = self.process_text(text)
             for word in words:
                 self.add(
                     stemmed_word=word,
@@ -48,7 +48,7 @@ class InvertedIndex:
                 )
 
     def search_phrase(self, query, limit=3):
-        query_words = self.process_sentence(query)
+        query_words = self.process_text(query)
         result = {}
         for word in query_words:
             if word in self.index:
