@@ -18,7 +18,7 @@ class DATA_BASE_PROPS:
     host = 'localhost'
     database = 'postgres'
     user = 'postgres'
-    password = 'kinmanz'
+    password = 'pass'
     port = 5433
 
 
