@@ -13,7 +13,7 @@ from logger import log
 from properties_bot import EMOJI
 
 bot = telebot.TeleBot(ONO_BOT_PROPS.token)
-client = PROPS.client
+client = PROPS.client_bot
 client.start()
 
 loop = asyncio.get_event_loop()

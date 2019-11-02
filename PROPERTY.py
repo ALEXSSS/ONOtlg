@@ -8,9 +8,10 @@ PROD = False
 class PROPS:
     api_id = 123
     api_hash = 'hash'
-    client = TelegramClient('session_name', api_id, api_hash)
-    sleep_time_approaches = 15  # * 60
-    sleep_time_channel = 2.0
+    client_extractor = TelegramClient('extractor_session', api_id, api_hash)
+    client_bot = TelegramClient('bot_session', api_id, api_hash)
+    sleep_time_approaches = 15 * 60
+    sleep_time_channel = 3
 
 
 class DATA_BASE_PROPS:

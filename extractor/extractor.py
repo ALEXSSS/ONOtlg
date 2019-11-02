@@ -6,7 +6,7 @@ from logger import log
 
 
 def aggregate_massages():
-    tg_client = PROPS.client
+    tg_client = PROPS.client_extractor
     tg_client.start()
 
     while True:
