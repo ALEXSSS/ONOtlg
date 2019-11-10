@@ -1,9 +1,12 @@
+import re
+
 from nltk.stem.snowball import SnowballStemmer
 
 from russian_extrac_configs import russian_stop_words, punctuation
 
 
 class InvertedIndex:
+    SPLITTER = re.compile(r"\b\S+\b")
 
     def __init__(self):
         self.index = {}
@@ -27,11 +30,25 @@ class InvertedIndex:
             res = res.replace(punc, " ")
         return res
 
+    def enrich_words_set(self, word_list, doubled=True):
+        doubledWords = set()
+        if doubled:
+            for i in range(len(word_list)):
+                if len(word_list[i]) <= 3: continue
+                for j in range(max(0, i - 1), min(len(word_list), i + 2)):
+                    if i == j: continue
+                    if len(word_list[j]) <= 3: continue
+                    doubledWords.add(word_list[j] + word_list[i])
+                    doubledWords.add(word_list[i] + word_list[j])
+        return word_list + list(doubledWords)
+
     def process_text(self, sentence: str):
         processed_sentence = InvertedIndex.replace_punctuation(sentence)
-        words = processed_sentence.split(" ")
-        words = [self.stemmer.stem(word) for word in words if word not in russian_stop_words]
-        return words
+        words = re.findall(InvertedIndex.SPLITTER, processed_sentence)
+        words_set = self.enrich_words_set([self.stemmer.stem(word.lower()) for word in words if word not in russian_stop_words])
+        return words_set
+
+
 
     # rows = [[sentence, message_id, channel]]
     def create_index(self, rows):
