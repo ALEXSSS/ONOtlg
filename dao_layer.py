@@ -46,9 +46,19 @@ def retrieve_all_channels(cursor):
 
 @with_postgres_cursor
 def retrieve_all_messages_with_channel(cursor):
-    cursor.execute("SELECT content, channel_name, message_id from message;")
+    cursor.execute("SELECT content, channel_name, message_id from message where publish_date > now() - interval '1 month';")
     return list(cursor.fetchall())
 
+
+
+@with_postgres_cursor
+def retrieve_all_channels_for_user(cursor, user_id):
+    cursor.execute(
+        f"""
+        SELECT chanel_name FROM user_channel WHERE user_id = '{user_id}';
+        """
+    )
+    return list(cursor.fetchall())
 
 @with_postgres_cursor
 def retrieve_all_messages_with_ids(cursor, ids=[]):
@@ -80,6 +90,10 @@ def add_anchor(cursor, channel):
 @with_postgres_cursor
 def add_user_channel_row(cursor, channel, user_id):
     cursor.execute(f"INSERT INTO user_channel(CHANEL_NAME, USER_ID) VALUES ('{channel}','{user_id}');")
+
+@with_postgres_cursor
+def delete_user_channel_row(cursor, channel, user_id):
+    cursor.execute(f"delete from user_channel where chanel_name = '{channel}' and user_id = '{user_id}';")
 
 
 @with_postgres_cursor
