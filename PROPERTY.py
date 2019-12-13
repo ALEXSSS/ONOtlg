@@ -19,7 +19,8 @@ class DATA_BASE_PROPS:
     database = 'postgres'
     user = 'postgres'
     password = 'pass'
-    port = 5433
+    port = 5434
+    connections = 20
 
 
 # Do not forget VPN
