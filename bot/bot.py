@@ -16,9 +16,10 @@ from index import InvertedIndex
 from properties_bot import EMOJI
 
 bot = telebot.TeleBot(ONO_BOT_PROPS.token)
-# DON'T CHANGE! IT IS VERY IMPORTANT (EXACTLY CLIENT EXTRACTOR MUST BE HERE)
-client = PROPS.client_extractor
-client.start()
+
+if __name__ == "__main__":
+    client = PROPS.client_bot
+    client.start()
 
 loop = asyncio.get_event_loop()
 last_time_query = 0

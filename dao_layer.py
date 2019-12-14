@@ -31,7 +31,7 @@ def with_postgres_cursor(f):
             return f(cursor, *args, **kwargs)
         except (Exception, psycopg2.Error) as error:
             stack_trace = traceback.format_exc()
-            log("Error while connecting to PostgreSQL", str(error) + "\n" + str(stack_trace))
+            log("Error while connecting to PostgreSQL" + str(error) + "\n" + str(stack_trace))
         finally:
             if connection:
                 cursor.close()
