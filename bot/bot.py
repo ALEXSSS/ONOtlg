@@ -55,6 +55,9 @@ def send_welcome(message):
         f"\n\n{EMOJI.POINT_RIGHT} Напишите :"
         "\n#search <набор слов, любое выражение> "
         "\nи я поищу новости этому отвечающие."
+
+        f"\n\n{EMOJI.POINT_RIGHT} Напишите :"
+        "\n#status и я покажу все ваши каналы"
     )
 
 
@@ -92,6 +95,13 @@ REGEX_HTML_CLEANER = re.compile('<.*?>')
 
 def clean_html(raw_html):
     return re.sub(REGEX_HTML_CLEANER, '', raw_html)
+
+
+@bot.message_handler(regexp='^#status')
+@be_alive_after_message("Что-то не могу!")
+def status(message):
+    available_channels = {channel[0] for channel in retrieve_all_channels_for_user(message.from_user.id)}
+    bot.reply_to(message, "Ваши каналы:\n" + "\n".join(available_channels))
 
 
 @bot.message_handler(regexp='^#search\s(\w|\W)*')
