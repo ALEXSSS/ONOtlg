@@ -136,9 +136,10 @@ def search(message):
 def rebuild_index():
     global index
     curr_time = time.time()
-    if not index or curr_time - last_time_query > PROPS.sleep_time_approaches:
-        index = InvertedIndex()
-        index.create_index(retrieve_all_messages_with_channel())
+    if index is None or curr_time - last_time_query > PROPS.sleep_time_approaches:
+        temp = InvertedIndex()
+        temp.create_index(retrieve_all_messages_with_channel())
+        index = temp
 
 
 def subscribe_if_not_subscribed(channel_to_check, client):
