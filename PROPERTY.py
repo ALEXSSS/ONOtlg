@@ -10,7 +10,7 @@ class PROPS:
     api_hash = 'hash'
     client_extractor = TelegramClient('extractor_session', api_id, api_hash)
     client_bot = TelegramClient('bot_session', api_id, api_hash)
-    sleep_time_approaches = 15 * 60
+    sleep_time_approaches = 15*60
     sleep_time_channel = 3
 
 
