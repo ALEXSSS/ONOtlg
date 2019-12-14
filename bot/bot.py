@@ -124,7 +124,7 @@ def search(message):
             f"<b>TITLE</b>    : {title}"
             f"\n<b>USERNAME</b> : {username}"
             f"\n<b>DATE</b>     : {date}"
-            f"\n<b>TEXT</b>     :\n{clean_html(text)}",
+            f"\n<b>TEXT</b>     :\n{clean_html(text[:3000])}...",
             parse_mode="HTML"
         )
         # loop.run_until_complete(client.forward_messages(
