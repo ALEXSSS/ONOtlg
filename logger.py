@@ -27,6 +27,6 @@ else:
 # If you want to set the logging level from a command-line option such as:
 # --log=INFO
 
-def log(messages):
-    logger.info(messages)
+def log(messages, *addition):
+    logger.info(messages + "\n ".join(addition))
     # print(label, message)

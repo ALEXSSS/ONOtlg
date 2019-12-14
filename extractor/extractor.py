@@ -10,6 +10,7 @@ def aggregate_massages():
     tg_client.start()
 
     while True:
+
         for channel, last_message in retrieve_all_channels():
             log(f"Check channel : {channel}")
             if last_message == 'NOT_SET':
@@ -17,7 +18,7 @@ def aggregate_massages():
                 initialise_anchor(channel, message.id)
                 log(f"Anchor set {channel}: {message.id}")
             else:
-                time.sleep(PROPS.sleep_time_channel)
+                # time.sleep(PROPS.sleep_time_channel)
                 messages = [*tg_client.iter_messages(entity=channel, min_id=int(last_message) + 1)]
                 if len(messages) > 0:
                     initialise_anchor(channel, max([message.id for message in messages]))

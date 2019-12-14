@@ -84,22 +84,22 @@ def retrieve_messages_from_anchor_with_channel(cursor):
 
 @with_postgres_cursor
 def initialise_anchor(cursor, channel, anchor):
-    cursor.execute(f"UPDATE ono_anchors SET last_message_id = '{anchor}' WHERE chanel_name = '{channel}';")
+    cursor.execute("UPDATE ono_anchors SET last_message_id = '{}' WHERE chanel_name = '{}';".format(anchor, channel))
 
 
 @with_postgres_cursor
 def add_anchor(cursor, channel):
-    cursor.execute(f"INSERT INTO ono_anchors(CHANEL_NAME) VALUES ('{channel}');")
+    cursor.execute("INSERT INTO ono_anchors(CHANEL_NAME) VALUES ('{}');".format(channel))
 
 
 @with_postgres_cursor
 def add_user_channel_row(cursor, channel, user_id):
-    cursor.execute(f"INSERT INTO user_channel(CHANEL_NAME, USER_ID) VALUES ('{channel}','{user_id}');")
+    cursor.execute("INSERT INTO user_channel(CHANEL_NAME, USER_ID) VALUES ('{}','{}');".format(channel, user_id))
 
 
 @with_postgres_cursor
 def delete_user_channel_row(cursor, channel, user_id):
-    cursor.execute(f"delete from user_channel where chanel_name = '{channel}' and user_id = '{user_id}';")
+    cursor.execute("delete from user_channel where chanel_name = '{}' and user_id = '{}';".format(channel, user_id))
 
 
 @with_postgres_cursor
@@ -115,7 +115,7 @@ def insert_messages(cursor, channel, messages):
             continue
 
         cursor.execute(
-            f"""
+            """
                 INSERT INTO MESSAGE(
                     MESSAGE_ID,
                     
@@ -129,19 +129,20 @@ def insert_messages(cursor, channel, messages):
                     PUBLISH_DATE,
                     CONTENT
                 ) VALUES (
-                    '{message.id}',
+                    '{}',
                     
-                    '{message.chat.id}',
-                    '{channel}',
-                    '{message.chat.title if hasattr(message.chat, 'title') else ""}',
+                    '{}',
+                    '{}',
+                    '{}',
                     
-                    '{message.sender.username}',
-                    '{message.sender.id}',
+                    '{}',
+                    '{}',
                     
-                    '{message.date}',
-                    '{message.text}'
+                    '{}',
+                    '{}'
                 );
-            """
+            """.format(message.id, message.chat.id, channel, message.chat.title if hasattr(message.chat, 'title') else "",
+                       message.sender.username, message.sender.id, message.date, message.text)
         )
 
 # CREATE TABLE MESSAGE

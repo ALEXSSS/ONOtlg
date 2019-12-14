@@ -36,7 +36,9 @@ def be_alive_after_message(error_message=None):
                     bot.reply_to(message, error_message)
                 stack_trace = traceback.format_exc()
                 log("Error: " + str(e) + "\n" + str(stack_trace))
+
         return wrapper
+
     return dec
 
 
@@ -72,6 +74,7 @@ def add_channel(message):
         bot.reply_to(message, f"Уже слежу за каналом, добавил вас, как заинтересованного!")
     add_user_channel_row(channel, message.from_user.id)
 
+
 @bot.message_handler(regexp='^#unsuscribe\s(\w|\W)*')
 @be_alive_after_message("Не могу найти канал!")
 def unsuscribe_channel(message):
@@ -97,11 +100,11 @@ def search(message):
     query = message.html_text[len('#search'):].strip()
     rebuild_index()
     available_channels = {channel[0] for channel in retrieve_all_channels_for_user(message.from_user.id)}
-    result = [res for res in index.search_phrase(query) if res[0][0] in available_channels]
+    result = [res for res in index.search_phrase(query, limit=100) if res[0][0] in available_channels][:4]
     for ((channel_name, msg_id), match) in result:
         msg = list(client.iter_messages(entity=channel_name, ids=int(msg_id)))[0]
         text = msg.text
-        title = msg.chat.title if hasattr(msg.chat,'title') else ""
+        title = msg.chat.title if hasattr(msg.chat, 'title') else ""
         username = msg.chat.username
         date = msg.date
         bot.send_message(
