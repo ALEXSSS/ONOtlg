@@ -6,7 +6,6 @@ import traceback
 
 from logger import log
 
-import telebot
 from telethon.tl.functions.channels import JoinChannelRequest
 
 from PROPERTY import ONO_BOT_PROPS, PROPS
@@ -15,11 +14,12 @@ from dao_layer import retrieve_all_channels, add_anchor, add_user_channel_row, r
 from index import InvertedIndex
 from properties_bot import EMOJI
 
-bot = telebot.TeleBot(ONO_BOT_PROPS.token)
+from telethon import TelegramClient, events
+
+REGEX_HTML_CLEANER = re.compile('<.*?>')
 
 if __name__ == "__main__":
-    client = PROPS.client_bot
-    client.start()
+    bot = PROPS.client_bot.start(bot_token=ONO_BOT_PROPS.token)
 
 loop = asyncio.get_event_loop()
 last_time_query = 0
@@ -43,11 +43,9 @@ def be_alive_after_message(error_message=None):
     return dec
 
 
-@bot.message_handler(commands=['start', 'help'])
-@be_alive_after_message("Видимо, бот сейчас не может!")
-def send_welcome(message):
-    bot.reply_to(
-        message,
+@bot.on(events.NewMessage(pattern='#start'))
+async def send_welcome(event):
+    await event.reply(
         "Готов к работе. "
         f"\n{EMOJI.POINT_RIGHT} Напишите :"
         "\n#add <id канала>"
@@ -62,79 +60,72 @@ def send_welcome(message):
     )
 
 
-@bot.message_handler(regexp='^#add\s(\w|\W)*')
-@be_alive_after_message("Не могу найти канал!")
-def add_channel(message):
-    channel = message.html_text[len('#add'):].strip()
+@bot.on(events.NewMessage(pattern='^#add\s(\w|\W)+'))
+async def add_channel(event):
+    channel_to_add = event.message.message[len('#add'):].strip()
     channels_names = {channel[0] for channel in retrieve_all_channels()}
-    if channel not in channels_names:
-        if subscribe_if_not_subscribed(channel, client):
-            add_anchor(channel)
-            bot.reply_to(message, f"Канал добавлен!")
+    if channel_to_add not in channels_names:
+        if (await subscribe_if_not_subscribed(channel_to_add, bot)):
+            add_anchor(channel_to_add)
+            await event.reply(f"Канал добавлен {channel_to_add}!")
         else:
-            bot.reply_to(message, f"Не могу найти такой канал: {channel}")
+            await event.reply(f"Не могу найти такой канал: {channel_to_add}")
             return
     else:
-        bot.reply_to(message, f"Уже слежу за каналом, добавил вас, как заинтересованного!")
-    add_user_channel_row(channel, message.from_user.id)
+        await event.reply(f"Уже слежу за каналом, добавил вас, как заинтересованного!")
+    add_user_channel_row(channel_to_add, event.sender_id)
 
 
-@bot.message_handler(regexp='^#unsuscribe\s(\w|\W)*')
-@be_alive_after_message("Не могу найти канал!")
-def unsuscribe_channel(message):
-    channel = message.html_text[len('#unsuscribe'):].strip()
+@bot.on(events.NewMessage(pattern='^#unsuscribe\s(\w|\W)+'))
+async def unsuscribe_channel(event):
+    channel_to_remove = event.message.message[len('#unsuscribe'):].strip()
     channels_names = {channel[0] for channel in retrieve_all_channels()}
-    if channel not in channels_names:
-        bot.reply_to(message, "Уже удалили!")
+    if channel_to_remove not in channels_names:
+        await event.reply("Уже удалили {channel_to_add}!")
     else:
-        delete_user_channel_row(channel, message.from_user.id)
-        bot.reply_to(message, f"Отписал от {channel}!")
-
-
-REGEX_HTML_CLEANER = re.compile('<.*?>')
+        delete_user_channel_row(channel_to_remove, event.sender_id)
+        await event.reply(f"Отписал от {channel_to_remove}!")
 
 
 def clean_html(raw_html):
     return re.sub(REGEX_HTML_CLEANER, '', raw_html)
 
 
-@bot.message_handler(regexp='^#status')
-@be_alive_after_message("Что-то не могу!")
-def status(message):
-    available_channels = {channel[0] for channel in retrieve_all_channels_for_user(message.from_user.id)}
-    bot.reply_to(message, "Ваши каналы:\n" + "\n".join(available_channels))
+@bot.on(events.NewMessage(pattern='^#status(\s)*'))
+async def status(event):
+    available_channels = {channel[0] for channel in retrieve_all_channels_for_user(event.sender_id)}
+    await event.reply("Ваши каналы:\n" + "\n".join(available_channels))
 
 
-@bot.message_handler(regexp='^#search\s(\w|\W)*')
-@be_alive_after_message("Что-то не ищется!")
-def search(message):
-    query = message.html_text[len('#search'):].strip()
+@bot.on(events.NewMessage(pattern='^#search\s(\w|\W)+'))
+async def search(event):
+    query = event.message.message[len('#search'):].strip()
     rebuild_index()
-    available_channels = {channel[0] for channel in retrieve_all_channels_for_user(message.from_user.id)}
+    available_channels = {channel[0] for channel in retrieve_all_channels_for_user(event.sender_id)}
     result = [res for res in index.search_phrase(query, limit=100) if res[0][0] in available_channels][:4]
     for ((channel_name, msg_id), match) in result:
-        msg = list(client.iter_messages(entity=channel_name, ids=int(msg_id)))[0]
-        text = msg.text
+        msg = (await bot.get_messages(entity=channel_name, ids=int(msg_id)))
+        text = msg.message
         title = msg.chat.title if hasattr(msg.chat, 'title') else ""
         username = msg.chat.username
         date = msg.date
-        bot.send_message(
-            message.chat.id,
 
+        await bot.send_message(
+            await event.get_input_chat(),
             f"<b>TITLE</b>    : {title}"
             f"\n<b>USERNAME</b> : {username}"
             f"\n<b>DATE</b>     : {date}"
-            f"\n<b>TEXT</b>     :\n{clean_html(text[:3000])}...",
-            parse_mode="HTML"
+            f"\n<b>TEXT</b>     :\n{clean_html(text[:3000])}...", parse_mode='html'
         )
         # loop.run_until_complete(client.forward_messages(
         #     message.chat.id,
         #     list(client.iter_messages(entity=channel_name, ids=int(msg_id)))[0]
         # ))
-    bot.reply_to(message, f"Нашли результат \n{result}!")
+    await event.reply(f"Нашли результат \n{result}!")
 
 
 def rebuild_index():
+    log("rebuild_index is started!")
     global index, last_time_query
     curr_time = time.time()
     if index is None or curr_time - last_time_query > PROPS.sleep_time_approaches:
@@ -142,17 +133,18 @@ def rebuild_index():
         temp.create_index(retrieve_all_messages_with_channel())
         index = temp
         last_time_query = curr_time
+    log("rebuild_index is ended!")
 
 
-def subscribe_if_not_subscribed(channel_to_check, client):
-    if channel_to_check not in available_channels(client):
-        loop.run_until_complete(client(JoinChannelRequest(channel_to_check)))
+async def subscribe_if_not_subscribed(channel_to_check, client):
+    async for dialog in client.iter_dialogs():
+        if dialog.name == channel_to_check:
+            return True
+    try:
+        await client(JoinChannelRequest(channel_to_check))
+    except ValueError as e:
+        return False
     return True
 
 
-def available_channels(client):
-    chats = [chat.name for chat in list(client.iter_dialogs())]
-    return chats
-
-
-bot.polling(none_stop=True, interval=0)
+bot.run_until_disconnected()

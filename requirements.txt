@@ -1,0 +1,16 @@
+certifi==2020.12.5
+chardet==4.0.0
+click==8.0.0
+idna==2.10
+joblib==1.0.1
+nltk==3.6.2
+psycopg2-binary==2.8.6
+pyaes==1.6.1
+pyasn1==0.4.8
+pyTelegramBotAPI==3.7.9
+regex==2021.4.4
+requests==2.25.1
+rsa==4.7.2
+Telethon==1.21.1
+tqdm==4.60.0
+urllib3==1.26.4

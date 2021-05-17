@@ -45,10 +45,9 @@ class InvertedIndex:
     def process_text(self, sentence: str):
         processed_sentence = InvertedIndex.replace_punctuation(sentence)
         words = re.findall(InvertedIndex.SPLITTER, processed_sentence)
-        words_set = self.enrich_words_set([self.stemmer.stem(word.lower()) for word in words if word not in russian_stop_words])
+        words_set = self.enrich_words_set(
+            [self.stemmer.stem(word.lower()) for word in words if word not in russian_stop_words])
         return words_set
-
-
 
     # rows = [[sentence, message_id, channel]]
     def create_index(self, rows):
