@@ -66,11 +66,15 @@ async def add_channel(event):
     channel_to_add = event.message.message[len('#add'):].strip()
     channels_names = {channel[0] for channel in retrieve_all_channels()}
     if channel_to_add not in channels_names:
-        if await subscribe_if_not_subscribed(channel_to_add, client_to_manage):
+        result, message = await subscribe_if_not_subscribed(channel_to_add, client_to_manage)
+        if result:
             add_anchor(channel_to_add)
             await event.reply(f"Канал добавлен {channel_to_add}!")
         else:
-            await event.reply(f"Не могу найти такой канал: {channel_to_add}")
+            if message == "ABSENT":
+                await event.reply(f"Не могу найти такой канал: {channel_to_add}")
+            else:
+                await event.reply(f"Это не канал: {channel_to_add}")
             return
     else:
         await event.reply(f"Уже слежу за каналом, добавил вас, как заинтересованного!")
@@ -140,12 +144,15 @@ def rebuild_index():
 async def subscribe_if_not_subscribed(channel_to_check, client):
     async for dialog in client.iter_dialogs():
         if dialog.name == channel_to_check:
-            return True
+            return True, "JOINED"
     try:
         await client(JoinChannelRequest(channel_to_check))
     except ValueError as e:
-        return False
-    return True
+        return False, "ABSENT"
+    except Exception as general:
+        log(f"BAD channel: {channel_to_check}, " + str(general))
+        return False, "BAD"
+    return True, "JOINED"
 
 
 bot.run_until_disconnected()
