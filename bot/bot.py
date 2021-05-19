@@ -20,7 +20,7 @@ REGEX_HTML_CLEANER = re.compile('<.*?>')
 
 if __name__ == "__main__":
     bot = PROPS.client_bot.start(bot_token=ONO_BOT_PROPS.token)
-    client_to_manage = PROPS.client_extractor
+    client_to_manage = PROPS.client_account_manager.start()
 
 loop = asyncio.get_event_loop()
 last_time_query = 0
