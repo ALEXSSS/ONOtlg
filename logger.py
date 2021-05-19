@@ -29,4 +29,4 @@ else:
 
 def log(messages, *addition):
     logger.info(messages + "\n ".join(addition))
-    # print(label, message)
+    print(messages, "\n ".join(addition))
