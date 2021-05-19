@@ -20,6 +20,7 @@ REGEX_HTML_CLEANER = re.compile('<.*?>')
 
 if __name__ == "__main__":
     bot = PROPS.client_bot.start(bot_token=ONO_BOT_PROPS.token)
+    client_to_manage = PROPS.client_extractor
 
 loop = asyncio.get_event_loop()
 last_time_query = 0
@@ -65,7 +66,7 @@ async def add_channel(event):
     channel_to_add = event.message.message[len('#add'):].strip()
     channels_names = {channel[0] for channel in retrieve_all_channels()}
     if channel_to_add not in channels_names:
-        if (await subscribe_if_not_subscribed(channel_to_add, bot)):
+        if await subscribe_if_not_subscribed(channel_to_add, client_to_manage):
             add_anchor(channel_to_add)
             await event.reply(f"Канал добавлен {channel_to_add}!")
         else:
