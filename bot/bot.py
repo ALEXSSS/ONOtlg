@@ -44,24 +44,33 @@ def be_alive_after_message(error_message=None):
     return dec
 
 
-@bot.on(events.NewMessage(pattern='#start'))
+@bot.on(events.NewMessage(pattern='(#|/)(start|help)'))
 async def send_welcome(event):
     await event.reply(
         "Готов к работе. "
         f"\n{EMOJI.POINT_RIGHT} Напишите :"
-        "\n#add <id канала>"
-        "\n#unsuscribe <id канала>"
+        "\n/add <id канала>"
+        "\n/unsuscribe <id канала>"
 
         f"\n\n{EMOJI.POINT_RIGHT} Напишите :"
-        "\n#search <набор слов, любое выражение> "
-        "\nи я поищу новости этому отвечающие."
+        "\n/search <набор слов, любое выражение> "
+        "\nи я поищу новости этому отвечающие в ваших выбранных ранние каналах."
+        
+        f"\n\n{EMOJI.POINT_RIGHT} Напишите :"
+        "\n/gsearch <набор слов, любое выражение> "
+        "\nи я поищу новости этому отвечающие глобально среди всех мной отслеживаемых."
 
         f"\n\n{EMOJI.POINT_RIGHT} Напишите :"
-        "\n#status и я покажу все ваши каналы"
+        "\n/status и я покажу все ваши каналы"
+
+        f"\n\n{EMOJI.POINT_RIGHT} вместо / вы можете исользовать #,"
+        "\nто есть /status можно писать #status (и остальные команды)"
+
+        f"\n\nЖелаем вам приятного поиска!"
     )
 
 
-@bot.on(events.NewMessage(pattern='^#add\s(\w|\W)+'))
+@bot.on(events.NewMessage(pattern='^(#|/)add\s(\w|\W)+'))
 async def add_channel(event):
     channel_to_add = event.message.message[len('#add'):].strip()
     channels_names = {channel[0] for channel in retrieve_all_channels()}
@@ -81,7 +90,7 @@ async def add_channel(event):
     add_user_channel_row(channel_to_add, event.sender_id)
 
 
-@bot.on(events.NewMessage(pattern='^#unsuscribe\s(\w|\W)+'))
+@bot.on(events.NewMessage(pattern='^(#|/)unsuscribe\s(\w|\W)+'))
 async def unsuscribe_channel(event):
     channel_to_remove = event.message.message[len('#unsuscribe'):].strip()
     channels_names = {channel[0] for channel in retrieve_all_channels()}
@@ -96,13 +105,13 @@ def clean_html(raw_html):
     return re.sub(REGEX_HTML_CLEANER, '', raw_html)
 
 
-@bot.on(events.NewMessage(pattern='^#status(\s)*'))
+@bot.on(events.NewMessage(pattern='^(#|/)status(\s)*'))
 async def status(event):
     available_channels = {channel[0] for channel in retrieve_all_channels_for_user(event.sender_id)}
     await event.reply("Ваши каналы:\n" + "\n".join(available_channels))
 
 
-@bot.on(events.NewMessage(pattern='^#search\s(\w|\W)+'))
+@bot.on(events.NewMessage(pattern='^(#|/)search\s(\w|\W)+'))
 async def search(event):
     query = event.message.message[len('#search'):].strip()
     rebuild_index()
@@ -129,6 +138,31 @@ async def search(event):
     await event.reply(f"Нашли результат \n{result}!")
 
 
+@bot.on(events.NewMessage(pattern='^(#|/)gsearch\s(\w|\W)+'))
+async def gsearch(event):
+    query = event.message.message[len('#gsearch'):].strip()
+    rebuild_index()
+    result = [res for res in index.search_phrase(query, limit=100)][:10]
+    for ((channel_name, msg_id), match) in result:
+        msg = (await bot.get_messages(entity=channel_name, ids=int(msg_id)))
+        text = msg.message
+        title = msg.chat.title if hasattr(msg.chat, 'title') else ""
+        username = msg.chat.username
+        date = msg.date
+
+        await bot.send_message(
+            await event.get_input_chat(),
+            f"<b>TITLE</b>    : {title}"
+            f"\n<b>USERNAME</b> : {username}"
+            f"\n<b>DATE</b>     : {date}"
+            f"\n<b>TEXT</b>     :\n{clean_html(text[:3000])}...", parse_mode='html'
+        )
+        # loop.run_until_complete(client.forward_messages(
+        #     message.chat.id,
+        #     list(client.iter_messages(entity=channel_name, ids=int(msg_id)))[0]
+        # ))
+    await event.reply(f"Нашли результат \n{result}!")
+
 def rebuild_index():
     log("rebuild_index is started!")
     global index, last_time_query
@@ -146,7 +180,8 @@ async def subscribe_if_not_subscribed(channel_to_check, client):
         if dialog.name == channel_to_check:
             return True, "JOINED"
     try:
-        await client(JoinChannelRequest(channel_to_check))
+        # await client(JoinChannelRequest(channel_to_check))
+        log("Missed subscription")
     except ValueError as e:
         return False, "ABSENT"
     except Exception as general:
