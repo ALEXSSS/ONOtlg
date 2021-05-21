@@ -116,6 +116,9 @@ async def search(event):
     query = event.message.message[len('#search'):].strip()
     rebuild_index()
     available_channels = {channel[0] for channel in retrieve_all_channels_for_user(event.sender_id)}
+    if len(available_channels) == 0:
+        await event.reply(f"Вы еще не подписались ни на один канал, попробуйте #gsearch, чтобы поискать глобально!")
+        return
     result = [res for res in index.search_phrase(query, limit=100) if res[0][0] in available_channels][:4]
     for ((channel_name, msg_id), match) in result:
         msg = (await bot.get_messages(entity=channel_name, ids=int(msg_id)))
