@@ -1,7 +1,11 @@
 import re
+import time
 
 from nltk.stem.snowball import SnowballStemmer
 
+from PROPERTY import PROPS
+from dao_layer import retrieve_all_messages_with_channel
+from logger import log
 from russian_extrac_configs import russian_stop_words, punctuation
 
 
@@ -77,6 +81,24 @@ class InvertedIndex:
                         result[message] = messages[message] / float(count)
         result = sorted(result.items(), key=lambda x: x[1], reverse=True)[:limit]
         return result
+
+
+def rebuild_index(index, last_time_query):
+    log("rebuild_index is started!")
+    try:
+        curr_time = time.time()
+        if index is None or curr_time - last_time_query > PROPS.sleep_time_approaches:
+            temp = InvertedIndex()
+            temp.create_index(retrieve_all_messages_with_channel())
+            return temp, curr_time
+        return index, last_time_query
+    finally:
+        log("rebuild_index is ended!")
+
+
+class FullSet(set):
+    def __contains__(self, item):
+        return True
 
 # index = InvertedIndex()
 # rows = [

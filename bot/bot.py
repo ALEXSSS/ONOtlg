@@ -11,7 +11,7 @@ from telethon.tl.functions.channels import JoinChannelRequest
 from PROPERTY import ONO_BOT_PROPS, PROPS
 from dao_layer import retrieve_all_channels, add_anchor, add_user_channel_row, retrieve_all_messages_with_channel, \
     delete_user_channel_row, retrieve_all_channels_for_user
-from index import InvertedIndex
+from index import InvertedIndex, rebuild_index
 from properties_bot import EMOJI
 
 from telethon import TelegramClient, events
@@ -55,7 +55,7 @@ async def send_welcome(event):
         f"\n\n{EMOJI.POINT_RIGHT} Напишите :"
         "\n/search <набор слов, любое выражение> "
         "\nи я поищу новости этому отвечающие в ваших выбранных ранние каналах."
-        
+
         f"\n\n{EMOJI.POINT_RIGHT} Напишите :"
         "\n/gsearch <набор слов, любое выражение> "
         "\nи я поищу новости этому отвечающие глобально среди всех мной отслеживаемых."
@@ -67,6 +67,18 @@ async def send_welcome(event):
         "\nто есть /status можно писать #status (и остальные команды)"
 
         f"\n\nЖелаем вам приятного поиска!"
+
+        f"\n\n----------------------------"
+        f"\n\n{EMOJI.POINT_RIGHT} более искушенные пользователи могут воспользоваться нашей notify функциональностью"
+        f"\nпросто напишите /notify и набор слов в свободной форме (NOTIFY РАБОТАЕТ ТОЛЬКО ПО ВАШИМ КАНАЛАМ) /notifyg по всем каналам"
+        f"\nили используйте /snotify и набор слов в ввиде логических выражений, который позволит вам лучше специфицировать ваш запрос"
+        f"\nпример /snotify иван иванов and криптовалюта или пример для бьюти блоггера /snotify наташа голубой глаз and тени"
+        f"\nтакже можно использовать операцию or и () скобочки для объяденения поисковых запросов, /snotifyg чтобы писать запросы по всем каналам"
+
+        f"\n\n{EMOJI.POINT_RIGHT} используйте #set_email <email> команду, чтобы записать ваш текущий емаил для уведомлений,"
+        f"\nпо умолчанию результаты поиска и нотификации приходят только в личные сообщения от бота"
+
+        f"\n\n{EMOJI.POINT_RIGHT} используйте #set_size <number> команду, чтобы поменять дефолтный размер выборки поиска."
     )
 
 
@@ -113,8 +125,10 @@ async def status(event):
 
 @bot.on(events.NewMessage(pattern='^(#|/)search\s(\w|\W)+'))
 async def search(event):
+    global index, last_time_query
+    index, last_time_query = rebuild_index(index, last_time_query)
+
     query = event.message.message[len('#search'):].strip()
-    rebuild_index()
     available_channels = {channel[0] for channel in retrieve_all_channels_for_user(event.sender_id)}
     if len(available_channels) == 0:
         await event.reply(f"Вы еще не подписались ни на один канал, попробуйте #gsearch, чтобы поискать глобально!")
@@ -143,8 +157,10 @@ async def search(event):
 
 @bot.on(events.NewMessage(pattern='^(#|/)gsearch\s(\w|\W)+'))
 async def gsearch(event):
+    global index, last_time_query
+    index, last_time_query = rebuild_index(index, last_time_query)
+
     query = event.message.message[len('#gsearch'):].strip()
-    rebuild_index()
     result = [res for res in index.search_phrase(query, limit=100)][:10]
     for ((channel_name, msg_id), match) in result:
         msg = (await bot.get_messages(entity=channel_name, ids=int(msg_id)))
@@ -165,17 +181,6 @@ async def gsearch(event):
         #     list(client.iter_messages(entity=channel_name, ids=int(msg_id)))[0]
         # ))
     await event.reply(f"Нашли результат \n{result}!")
-
-def rebuild_index():
-    log("rebuild_index is started!")
-    global index, last_time_query
-    curr_time = time.time()
-    if index is None or curr_time - last_time_query > PROPS.sleep_time_approaches:
-        temp = InvertedIndex()
-        temp.create_index(retrieve_all_messages_with_channel())
-        index = temp
-        last_time_query = curr_time
-    log("rebuild_index is ended!")
 
 
 async def subscribe_if_not_subscribed(channel_to_check, client):

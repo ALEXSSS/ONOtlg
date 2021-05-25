@@ -66,6 +66,16 @@ def retrieve_all_channels_for_user(cursor, user_id):
 
 
 @with_postgres_cursor
+def retrieve_all_users_notifies(cursor):
+    cursor.execute(
+        """
+        SELECT USER_ID, GLOBALLY, QUERY_TEXT FROM USER_NOTIFY;
+        """
+    )
+    return list(cursor.fetchall())
+
+
+@with_postgres_cursor
 def retrieve_all_messages_with_ids(cursor, ids=[]):
     cursor.execute(
         f"""
@@ -103,7 +113,7 @@ def delete_user_channel_row(cursor, channel, user_id):
 
 
 @with_postgres_cursor
-def insert_messages(cursor, channel, messages):
+def insert_messages_tg(cursor, channel, messages):
     for message in messages:
         # message.chat.id
         # message.chat.title
@@ -127,7 +137,8 @@ def insert_messages(cursor, channel, messages):
                     SENDER_ID,
                     
                     PUBLISH_DATE,
-                    CONTENT
+                    CONTENT,
+                    SOURCE_ID
                 ) VALUES (
                     '{}',
                     
@@ -139,24 +150,10 @@ def insert_messages(cursor, channel, messages):
                     '{}',
                     
                     '{}',
+                    '{}',
                     '{}'
                 );
-            """.format(message.id, message.chat.id, channel, message.chat.title if hasattr(message.chat, 'title') else "",
-                       message.sender.username, message.sender.id, message.date, message.text)
+            """.format(message.id, message.chat.id, channel,
+                       message.chat.title if hasattr(message.chat, 'title') else "",
+                       message.sender.username, message.sender.id, message.date, message.text, "TG")
         )
-
-# CREATE TABLE MESSAGE
-# (
-#     MESSAGE_ID   TEXT,
-#
-#     CHANNEL_ID TEXT,
-#     CHANNEL_NAME TEXT,
-#     CHANNEL_TITLE TEXT,
-#
-#     SENDER_NAME TEXT,
-#     SENDER_USERNAME TEXT,
-#
-#     PUBLISH_DATE TEXT,
-#     CONTENT      TEXT NOT NULL,
-#     PRIMARY KEY (MESSAGE_ID, CHANNEL_NAME)
-# );
