@@ -171,17 +171,19 @@ async def gsearch(event):
         username = msg.chat.username
         date = msg.date
 
+        chat = await event.get_input_chat()
         await bot.send_message(
-            await event.get_input_chat(),
+            chat,
             f"<b>TITLE</b>    : {title}"
             f"\n<b>USERNAME</b> : {username}"
             f"\n<b>DATE</b>     : {date}"
-            f"\n<b>TEXT</b>     :\n{clean_html(text[:3000])}...", parse_mode='html'
+            f"\n<b>METRICS</b>     : {round(match, 2)}",
+            parse_mode='html'
         )
-        # loop.run_until_complete(client.forward_messages(
-        #     message.chat.id,
-        #     list(client.iter_messages(entity=channel_name, ids=int(msg_id)))[0]
-        # ))
+        await bot.forward_messages(
+            chat,
+            msg
+        )
     await event.reply(f"Нашли результат \n{result}!")
 
 
