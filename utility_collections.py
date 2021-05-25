@@ -1,3 +1,5 @@
+from nltk.corpus import stopwords
+
 russian_stop_words = {
     "", "c", "а", "алло", "без", "белый", "близко", "более", "больше", "большой", "будем", "будет",
     "будете", "будешь", "будто", "буду", "будут", "будь", "бы", "бывает", "бывь", "был", "была",
@@ -57,6 +59,8 @@ russian_stop_words = {
 
     "www", "http", "https", "com", "ru", "io", "org"
 }
+
+english_stop_words = stopWords = set(stopwords.words('english'))
 
 punctuation = {
     ",", ".", "#", ":", "/"

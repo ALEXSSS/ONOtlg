@@ -6,7 +6,7 @@ from nltk.stem.snowball import SnowballStemmer
 from PROPERTY import PROPS
 from dao_layer import retrieve_all_messages_with_channel
 from logger import log
-from russian_extrac_configs import russian_stop_words, punctuation
+from utility_collections import russian_stop_words, punctuation, english_stop_words
 
 
 class InvertedIndex:
@@ -15,6 +15,7 @@ class InvertedIndex:
     def __init__(self):
         self.index = {}
         self.stemmer = SnowballStemmer("russian")
+        self.stemmer_eng = SnowballStemmer("english")
 
     # (count of occurrences, dict_of_documents)
     def add(self, stemmed_word, message_id, channel):
@@ -50,8 +51,15 @@ class InvertedIndex:
         processed_sentence = InvertedIndex.replace_punctuation(sentence)
         words = re.findall(InvertedIndex.SPLITTER, processed_sentence)
         words_set = self.enrich_words_set(
-            [self.stemmer.stem(word.lower()) for word in words if word not in russian_stop_words])
-        return words_set
+            [word for word in words if word not in russian_stop_words and word not in english_stop_words])
+
+        words_stemmed = []
+        for word in words_set:
+            if word.isascii():
+                words_stemmed.append(self.stemmer_eng.stem(word))
+            else:
+                words_stemmed.append(self.stemmer.stem(word))
+        return words_stemmed
 
     # rows = [[sentence, message_id, channel]]
     def create_index(self, rows):
